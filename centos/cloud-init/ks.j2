@@ -1,0 +1,54 @@
+#version=DEVEL
+# System authorization information
+auth --enableshadow --passalgo=sha512
+# Use CDROM installation media
+cdrom
+# Use graphical install
+graphical
+# Run the Setup Agent on first boot
+firstboot --enable
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+# System language
+lang en_US.UTF-8
+
+# Network information
+network  --bootproto=dhcp --device=eth0 --onboot=off --ipv6=auto --no-activate
+network  --hostname=centos.local
+
+# Root password
+rootpw "packer"
+# System services
+services --enabled="chronyd"
+# System timezone
+timezone Asia/Shanghai --isUtc
+# password is centos
+user --groups=wheel --name=centos --password=$5$AflBTtwNeRux.cUY$78E1Moch7qH6rJ.YC5WnHehF373NBc/KTaUd6d7G/e1 --iscrypted --gecos="centos"
+# System bootloader configuration
+bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=sda
+autopart --type=lvm
+# Partition clearing information
+clearpart --none --initlabel
+
+# After installation (poweroff, reboot, halt)
+# --eject ejects installation DVD (in theory)
+reboot --eject
+
+%packages
+@^minimal
+@core
+chrony
+kexec-tools
+qemu-guest-agent
+
+%end
+
+%addon com_redhat_kdump --enable --reserve-mb='auto'
+
+%end
+
+%anaconda
+pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
+pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%end
