@@ -71,7 +71,8 @@ source "proxmox" "ubuntu" {
   unmount_iso              = true
 
   os                       = "l26"
-  memory                   = "2048"
+  cores                    = "2"
+  memory                   = "4096"
   disks {
     disk_size         = "20G"
     storage_pool      = "local-lvm"
