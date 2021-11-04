@@ -20,3 +20,11 @@ autoinstall:
     - qemu-guest-agent
   late-commands:
     - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu
+  package_update: false
+  package_upgrade: false
+  apt:
+    preserve_sources_list: false
+    primary:
+        - arches: [amd64]
+          uri: "https://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
+    geoip: true

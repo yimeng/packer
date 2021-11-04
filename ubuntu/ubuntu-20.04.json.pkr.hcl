@@ -31,10 +31,13 @@ locals {
 locals {
     proxmox_url = vault("secrets/proxmox", "url")
 }
+locals {
+    date = formatdate("YYYYMMDD-hhmm", timeadd(timestamp(), "8h"))
+}
 
 variable "ssh_username" {
   type    = string
-  default = "root"
+  default = "ubuntu"
 }
 # user-data identity password
 variable "ssh_password" {
@@ -61,14 +64,15 @@ source "proxmox" "ubuntu" {
   proxmox_url          = "${local.proxmox_url}"
   node                 = "${var.proxmox_node}"
 
-  boot_command = ["<enter><enter><f6><esc><wait> ", "autoinstall ds=nocloud-net;seedfrom=http://{{ .HTTPIP }}:{{ .HTTPPort }}/", "<enter><wait>"]
-  boot_wait    = "5s"
+  #boot_command = ["<enter><enter><f6><esc><wait>", "autoinstall ds=nocloud-net;seedfrom=http://{{ .HTTPIP }}:{{ .HTTPPort }}/", "<enter><wait>"]
+  boot_command = ["<enter><enter><f6><esc><wait>", "autoinstall ds=nocloud-net;seedfrom=http://{{ .HTTPIP }}:{{ .HTTPPort }}/", "${local.date}"]
+  boot_wait    = "3s"
 
   http_directory           = "cloud-init"
   http_interface           = "ppp0"
   insecure_skip_tls_verify = true
   iso_file                 = "${var.iso_file}"
-  unmount_iso              = true
+  #unmount_iso              = true
 
   os                       = "l26"
   cores                    = "2"
@@ -86,8 +90,8 @@ source "proxmox" "ubuntu" {
   }
 
   qemu_agent           = true
-  template_name        = "Ubuntu-template"
-  template_description = "Ubuntu 20.04 x86_64 template built with packer"
+  template_name        = "Ubuntu-template-{local.date}"
+  template_description = "Ubuntu 20.04 x86_64 template built with packer on ${local.date}"
 
   ssh_username         = "${var.ssh_username}"
   ssh_password         = "${var.ssh_password}"
