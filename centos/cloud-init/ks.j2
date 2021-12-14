@@ -17,7 +17,7 @@ network  --bootproto=dhcp --device=eth0 --onboot=off --ipv6=auto --no-activate
 network  --hostname=centos.local
 
 # Root password
-rootpw "packer"
+rootpw "root"
 # System services
 services --enabled="chronyd"
 # System timezone
@@ -30,9 +30,15 @@ autopart --type=lvm
 # Partition clearing information
 clearpart --none --initlabel
 
+selinux --disable
+
 # After installation (poweroff, reboot, halt)
 # --eject ejects installation DVD (in theory)
 reboot --eject
+
+repo --name="CentOS" --baseurl="http://mirrors.aliyun.com/centos/$releasever/os/$basearch/"
+repo --name="epel" --baseurl="http://mirrors.aliyun.com/epel/7/$basearch"
+
 
 %packages
 @^minimal
@@ -40,6 +46,7 @@ reboot --eject
 chrony
 kexec-tools
 qemu-guest-agent
+yum-utils
 
 %end
 
@@ -51,4 +58,8 @@ qemu-guest-agent
 pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
 pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%end
+
+%post
+echo "centos        ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers.d/centos
 %end

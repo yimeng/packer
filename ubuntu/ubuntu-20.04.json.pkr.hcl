@@ -48,7 +48,9 @@ variable "ssh_password" {
 
 variable "iso_file" {
   type    = string
-  default = "local:iso/ubuntu-20.04.2-live-server-amd64.iso"
+  #default = "local:iso/ubuntu-20.04.2-live-server-amd64.iso"
+  #default = "local:iso/ubuntu-21.10-live-server-amd64.iso"
+  default = "local:iso/ubuntu-20.04.3-live-server-amd64.iso"
 }
 
 
@@ -68,7 +70,7 @@ source "proxmox" "ubuntu" {
   boot_wait    = "3s"
 
   http_directory           = "cloud-init"
-  #http_interface           = "ppp0"
+  #http_interface           = "utun4"
   http_interface           = "en0"
   insecure_skip_tls_verify = true
   iso_file                 = "${var.iso_file}"

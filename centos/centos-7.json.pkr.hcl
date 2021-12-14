@@ -44,8 +44,8 @@ source "proxmox" "centos7" {
   password             = "${local.proxmox_password}"
   proxmox_url          = "${local.proxmox_url}"
 
-  ssh_username         = "root"
-  ssh_password         = "packer"
+  ssh_username         = "centos"
+  ssh_password         = "centos"
   ssh_timeout          = "20m"
 
   boot_command = ["<up><tab> ip=dhcp inst.cmdline inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.j2<enter>"]
@@ -57,7 +57,8 @@ source "proxmox" "centos7" {
     type              = "scsi"
   }
   http_directory           = "cloud-init"
-  http_interface           = "ppp0"
+  #http_interface           = "utun4"
+  http_interface           = "en0"
   insecure_skip_tls_verify = true
   iso_file                 = "local:iso/CentOS-7-x86_64-Minimal-2009.iso"
   network_adapters {
