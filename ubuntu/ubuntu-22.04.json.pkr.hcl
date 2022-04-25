@@ -48,9 +48,6 @@ variable "ssh_password" {
 
 variable "iso_file" {
   type    = string
-  #default = "local:iso/ubuntu-20.04.2-live-server-amd64.iso"
-  #default = "local:iso/ubuntu-21.10-live-server-amd64.iso"
-  #default = "local:iso/ubuntu-20.04.3-live-server-amd64.iso"
   default = "local:iso/ubuntu-22.04-live-server-amd64.iso"
 }
 
@@ -68,8 +65,7 @@ source "proxmox" "ubuntu" {
   node                 = "${var.proxmox_node}"
 
   #boot_command = ["<enter><enter><f6><esc><wait>", "autoinstall ds=nocloud-net;seedfrom=http://{{ .HTTPIP }}:{{ .HTTPPort }}/", "<enter><wait>"]
-  "boot_command": [
-        "<esc><esc><esc><esc>e<wait>",
+  boot_command= ["<esc><esc><esc><esc>e<wait>",
         "<del><del><del><del><del><del><del><del>",
         "<del><del><del><del><del><del><del><del>",
         "<del><del><del><del><del><del><del><del>",
@@ -87,8 +83,7 @@ source "proxmox" "ubuntu" {
         "linux /casper/vmlinuz --- autoinstall ds=\"nocloud-net;seedfrom=http://{{.HTTPIP}}:{{.HTTPPort}}/\"<enter><wait>",
         "initrd /casper/initrd<enter><wait>",
         "boot<enter>",
-        "<enter><f10><wait>"
-      ]
+        "<enter><f10><wait>"]
   boot_wait    = "3s"
 
   http_directory           = "cloud-init"
