@@ -24,22 +24,11 @@ locals {
     date = formatdate("YYYYMMDD-hhmm", timeadd(timestamp(), "8h"))
 }
 
-variable proxmox_username {
-#    proxmox_username= vault("secrets/proxmox", "username")
-    type  = string
-    default = "username"
-}
-
-variable proxmox_password {
-#    proxmox_password = vault("secrets/proxmox", "password")
-    type   = string
-    default = "password"
-}
-
-variable proxmox_url{
-   # proxmox_url = vault("secrets/proxmox", "url")
-   type   = string
-   default = "https://xx.xx.xx.xx:8006/api2/json"
+locals {
+    proxmox_username = vault("secrets/office", "username")
+    proxmox_password = vault("secrets/office", "password")
+    proxmox_url = vault("secrets/office", "url")
+    sensitive  = true
 }
 
 variable "ssh_username" {
@@ -60,9 +49,9 @@ variable "iso_file" {
 
 
 source "proxmox" "ubuntu" {
-  username             = "${var.proxmox_username}"
-  password             = "${var.proxmox_password}"
-  proxmox_url          = "${var.proxmox_url}"
+  username             = "${local.proxmox_username}"
+  password             = "${local.proxmox_password}"
+  proxmox_url          = "${local.proxmox_url}"
   # node                 = "pve211"
 
   boot_command =  "${local.boot_command}"
