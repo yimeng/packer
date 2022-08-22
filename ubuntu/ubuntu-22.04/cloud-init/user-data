@@ -9,16 +9,21 @@ autoinstall:
     layout:
       name: lvm
   identity:
+    preserve_hostname: false
     hostname: ubuntu
     username: ubuntu
     password: $6$rounds=4096$8dkK1P/oE$2DGKKt0wLlTVJ7USY.0jN9du8FetmEr51yjPyeiR.zKE3DGFcitNL/nF1l62BLJNR87lQZixObuXYny.Mf17K1
     #lock_passwd: false
     #sudo: ALL=(ALL) NOPASSWD:ALL
+  updates: security
+  apt:
+    disable_suites: [security]
   ssh:
     allow-pw: false
     install-server: yes
     authorized-keys: 
     - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0FCMzjxuo6gtUf1bLbt5ixyEtPAgIetjmY9GaZrOrARSdvGM9UAKlAou1f3ftL5258Uz0hQW+mF7v5yGUR53zFe2975xLv8Av5L3cjurvEC7PoPG8uEotRO0pXSomA74ouibaQ31cXjnQmBDAtTEmr0EvCNdMxtjQyzp8/SGggqHS6z6g4yh591TL8yci3E6hsBi7T+LySZjqQw0KxX43E2VCbMXqVeldQUg6VjLo39wSadBsF7mBxkXD3kjxEwKHmiJIbJoGHJe8tZrZDaL6Eoz+C1fp6MRbbyiu8LTqi5Jx1Km8etzxH4korTYNGDlErQFozBY0M1u8dccNszeiw== mail@yimeng.ch
+    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBMHa6muIj/k2i8nGFddS2xpSy4XApnMVIClCAOvKXkl ssh@yimeng.ch
   user-data:
     disable_root: true
   packages:

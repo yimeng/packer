@@ -20,27 +20,26 @@ locals {
         "<enter><f10><wait>"]
 }
 
-variable date {
-    type = string
-    default = formatdate("YYYYMMDD-hhmm", timeadd(timestamp(), "8h"))
+locals {
+    date = formatdate("YYYYMMDD-hhmm", timeadd(timestamp(), "8h"))
 }
 
 variable proxmox_username {
 #    proxmox_username= vault("secrets/proxmox", "username")
     type  = string
-    default = "username@pve"
+    default = "username"
 }
 
 variable proxmox_password {
 #    proxmox_password = vault("secrets/proxmox", "password")
     type   = string
-    default = "xxxxxx"
+    default = "password"
 }
 
 variable proxmox_url{
    # proxmox_url = vault("secrets/proxmox", "url")
    type   = string
-   default = "https://ip:8006/api2/json"
+   default = "https://xx.xx.xx.xx:8006/api2/json"
 }
 
 variable "ssh_username" {
@@ -76,10 +75,10 @@ source "proxmox" "ubuntu" {
   unmount_iso              = true
 
   os                       = "l26"
-  cores                    = "2"
-  memory                   = "4096"
+  cores                    = "4"
+  memory                   = "8192"
   disks {
-    disk_size         = "40G"
+    disk_size         = "60G"
     storage_pool      = "local-lvm"
     storage_pool_type = "lvm"
     type              = "scsi"
@@ -92,7 +91,7 @@ source "proxmox" "ubuntu" {
   }
 
   qemu_agent           = true
-  template_name        = "Ubuntu-template-${local.date}"
+  template_name        = "ubuntu-template-yimeng"
   template_description = "Ubuntu 22.04 x86_64 template built with packer on ${local.date}"
 
   ssh_username         = "${var.ssh_username}"
@@ -122,6 +121,7 @@ build {
   provisioner "shell" {
     inline = [
       "sudo truncate -s 0 /etc/machine-id",
+      "sudo hostnamectl set-hostname $(openssl rand -hex 8)",
       "exit 0",
       ]
   }

@@ -1,16 +1,16 @@
 nodes = {
-  pve211 = {
-    proxmox_node =  "pve211"
-    proxmox_vm_id = 231
-  }
+#  pve211 = {
+#    proxmox_node =  "pve211"
+#    proxmox_vm_id = 295
+#  }
   pve212 = {
     proxmox_node =  "pve212"
-    proxmox_vm_id = 232
+    proxmox_vm_id = 296
   }
-  pve213= {
-    proxmox_node =  "pve213"
-    proxmox_vm_id = 233
-  }
+#  pve213= {
+#    proxmox_node =  "pve213"
+#    proxmox_vm_id = 297
+#  }
 }
 
 
