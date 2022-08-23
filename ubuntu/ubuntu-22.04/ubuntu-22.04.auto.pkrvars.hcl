@@ -1,15 +1,15 @@
 nodes = {
 #  pve211 = {
-#    proxmox_node =  "pve211"
-#    proxmox_vm_id = 295
+#    image_name = "pve211"
+#    image_id = 295
 #  }
-  pve212 = {
-    proxmox_node =  "pve212"
-    proxmox_vm_id = 296
+  homelab = {
+    image_name = "image_name"
+    image_id = 203
   }
 #  pve213= {
-#    proxmox_node =  "pve213"
-#    proxmox_vm_id = 297
+#    image_name = "pve213"
+#    image_id = 297
 #  }
 }
 
