@@ -26,9 +26,9 @@ locals {
 }
 
 locals {
-    proxmox_username = vault("secrets/office", "username")
-    proxmox_password = vault("secrets/office", "password")
-    proxmox_url = vault("secrets/office", "url")
+    proxmox_username = vault("secrets/proxmox", "username")
+    proxmox_password = vault("secrets/proxmox", "password")
+    proxmox_url = vault("secrets/proxmox", "url")
     sensitive  = true
 }
 
@@ -53,16 +53,15 @@ source "proxmox" "ubuntu" {
   username             = "${local.proxmox_username}"
   password             = "${local.proxmox_password}"
   proxmox_url          = "${local.proxmox_url}"
-  # node                 = "pve211"
 
   boot_command =  "${local.boot_command}"
   boot_wait    = "3s"
 
   http_directory           = "cloud-init"
-  http_interface           = "en1"
+  http_interface           = "en0"
   insecure_skip_tls_verify = true
   iso_file                 = "${var.iso_file}"
-  unmount_iso              = true
+  unmount_iso              = false
 
   os                       = "l26"
   cores                    = "4"
@@ -76,7 +75,7 @@ source "proxmox" "ubuntu" {
   scsi_controller      = "virtio-scsi-pci"
 
   network_adapters {
-    bridge = "vmbr3"
+    bridge = "vmbr0"
     model = "virtio"
   }
 
@@ -87,8 +86,6 @@ source "proxmox" "ubuntu" {
   ssh_username         = "${var.ssh_username}"
   ssh_password         = "${var.ssh_password}"
   ssh_timeout          = "30m"
-  
-  # vm_id                = 241
 
 
 }
@@ -97,14 +94,14 @@ variable nodes {
 }
 
 build {
-  name = "proxmox"
+  name = "build"
   dynamic "source" {
     for_each = var.nodes
     labels = ["source.proxmox.ubuntu"]
     content {
-      name = source.key
-      node = source.value.proxmox_node
-      vm_id = source.value.proxmox_vm_id
+      node = source.key
+      name = source.value.image_name
+      #vm_id = source.value.image_id
     }
 }
 
@@ -112,6 +109,7 @@ build {
     inline = [
       "sudo truncate -s 0 /etc/machine-id",
       "sudo hostnamectl set-hostname $(openssl rand -hex 8)",
+      "sudo env > ~/packer.env",
       "exit 0",
       ]
   }

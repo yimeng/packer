@@ -8,8 +8,8 @@ nodes = {
 #    proxmox_vm_id = 296
 #  }
 #  pve213= {
-#    proxmox_node =  "pve213"
-#    proxmox_vm_id = 297
+#    image_name = "pve213"
+#    image_id = 297
 #  }
 }
 
