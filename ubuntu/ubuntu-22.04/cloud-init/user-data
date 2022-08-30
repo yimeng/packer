@@ -9,7 +9,6 @@ autoinstall:
     layout:
       name: lvm
   identity:
-    preserve_hostname: false
     hostname: ubuntu
     username: ubuntu
     password: $6$rounds=4096$8dkK1P/oE$2DGKKt0wLlTVJ7USY.0jN9du8FetmEr51yjPyeiR.zKE3DGFcitNL/nF1l62BLJNR87lQZixObuXYny.Mf17K1
