@@ -1,7 +1,7 @@
 nodes = {
   pve211 = {
     os = "l26"
-    # cores                    = "4"
+    cores                    = "4"
     memory                   = "8192"
     disks = {
         disk_size         = "60G"
