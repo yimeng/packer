@@ -14,9 +14,9 @@ autoinstall:
     password: $6$rounds=4096$8dkK1P/oE$2DGKKt0wLlTVJ7USY.0jN9du8FetmEr51yjPyeiR.zKE3DGFcitNL/nF1l62BLJNR87lQZixObuXYny.Mf17K1
     #lock_passwd: false
     #sudo: ALL=(ALL) NOPASSWD:ALL
-  # updates: security
-  # apt:
-  #   disable_suites: [security]
+  updates: security
+  apt:
+    disable_suites: [security]
   ssh:
     allow-pw: true
     install-server: yes

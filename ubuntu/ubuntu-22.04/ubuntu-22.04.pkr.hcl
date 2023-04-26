@@ -1,27 +1,4 @@
 locals {
-  boot_command = ["<esc><esc><esc><esc>e<wait>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "<del><del><del><del><del><del><del><del>",
-        "linux /casper/vmlinuz --- autoinstall ds=\"nocloud-net;live-updates=off;seedfrom=http://{{.HTTPIP}}:{{.HTTPPort}}/\"<enter><wait>",
-#        "linux /casper/vmlinuz --- autoinstall url=/cdrom/  ds=\"nocloud-net;seedfrom=http://{{.HTTPIP}}:{{.HTTPPort}}/\"<enter><wait>",
-        "initrd /casper/initrd<enter><wait>",
-        "boot<enter>",
-        "<enter><f10><wait>"]
-}
-
-locals {
     date = formatdate("YYYYMMDD-hhmm", timeadd(timestamp(), "8h"))
 }
 
@@ -32,65 +9,17 @@ locals {
     sensitive  = true
 }
 
-variable "ssh_username" {
-  type    = string
-  default = "ubuntu"
-}
-# user-data identity password
-variable "ssh_password" {
-  type    = string
-  default = "ubuntu"
-}
-
-variable "iso_file" {
-  type    = string
-  default = "local:iso/ubuntu-22.04-live-server-amd64.iso"
-}
-
-
-
 source "proxmox" "ubuntu" {
   username             = "${local.proxmox_username}"
   password             = "${local.proxmox_password}"
   proxmox_url          = "${local.proxmox_url}"
-
-  boot_command =  "${local.boot_command}"
-  boot_wait    = "3s"
-
-  http_directory           = "cloud-init"
-  http_interface           = "en1"
-  insecure_skip_tls_verify = true
-  iso_file                 = "${var.iso_file}"
-  unmount_iso              = false
-
-  os                       = "l26"
-  cores                    = "4"
-  memory                   = "8192"
-  disks {
-    disk_size         = "60G"
-    storage_pool      = "local-lvm"
-    storage_pool_type = "lvm"
-    type              = "scsi"
-  }
-  scsi_controller      = "virtio-scsi-pci"
-
-  network_adapters {
-    bridge = "vmbr3"
-    model = "virtio"
-  }
-
-  qemu_agent           = true
-  template_name        = "ubuntu-template-yimeng"
-  template_description = "Ubuntu 22.04 x86_64 template built with packer on ${local.date}"
-
-  ssh_username         = "${var.ssh_username}"
-  ssh_password         = "${var.ssh_password}"
-  ssh_timeout          = "30m"
-
-
 }
 
 variable nodes {
+}
+
+variable abc {
+  default = 4
 }
 
 build {
@@ -100,11 +29,44 @@ build {
     labels = ["source.proxmox.ubuntu"]
     content {
       node = source.key
-      name = source.value.image_name
+      name = source.key
+
+      os                       = source.value.os
+      cores                    = source.value.cores
+      memory                   = source.value.memory
+      disks {
+        disk_size         = source.value.disks.disk_size
+        storage_pool      = source.value.disks.storage_pool
+        storage_pool_type = source.value.disks.storage_pool_type
+        type              = source.value.disks.type
+      }
+      scsi_controller      = source.value.scsi_controller
+
+      network_adapters {
+        bridge = source.value.network_adapters.bridge
+        model = source.value.network_adapters.model
+      }
+      boot_command = source.value.boot_command
+      boot_wait    = source.value.boot_wait
+
+      ssh_username         = source.value.ssh_username
+      ssh_password         = source.value.ssh_password
+      ssh_timeout          = source.value.ssh_timeout
+
+      template_name        = "ubuntu-template-yimeng"
+      template_description = "source.value.template_description ${local.date}"
+
+      iso_file             =  source.value.iso_file
+      unmount_iso          =  source.value.unmount_iso
+
+      http_directory           = source.value.http_directory
+      http_interface           = source.value.http_interface
+      insecure_skip_tls_verify = source.value.insecure_skip_tls_verify
+
+      # name = source.value.image_name
       #vm_id = source.value.image_id
     }
 }
-
   provisioner "shell" {
     inline = [
       "sudo truncate -s 0 /etc/machine-id",
