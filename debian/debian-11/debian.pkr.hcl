@@ -1,3 +1,12 @@
+packer {
+  required_plugins {
+    proxmox = {
+      version = ">= 1.1.2"
+      source  = "github.com/hashicorp/proxmox"
+    }
+  }
+}
+
 locals {
         boot_command = ["<esc><wait>auto preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg<enter>"]
 }
@@ -26,7 +35,7 @@ variable "ssh_password" {
 
 variable "iso_file" {
   type    = string
-  default = "local:iso/debian-11.5.0-amd64-netinst.iso"
+  default = "local:iso/debian-11.6.0-amd64-DVD-1.iso"
 }
 
 
@@ -40,7 +49,7 @@ source "proxmox" "debian" {
   boot_wait    = "3s"
 
   http_directory           = "cloud-init"
-  http_interface           = "en0"
+  http_interface           = "en1"
   insecure_skip_tls_verify = true
   iso_file                 = "${var.iso_file}"
   unmount_iso              = false
@@ -57,7 +66,7 @@ source "proxmox" "debian" {
   scsi_controller      = "virtio-scsi-pci"
 
   network_adapters {
-    bridge = "vmbr0"
+    bridge = "vmbr3"
     model = "virtio"
   }
 
@@ -83,7 +92,7 @@ build {
     content {
       node = source.key
       name = source.value.image_name
-      #vm_id = source.value.image_id
+      vm_id = source.value.image_id
     }
 }
 

@@ -14,7 +14,7 @@ locals {
         "<del><del><del><del><del><del><del><del>",
         "<del><del><del><del><del><del><del><del>",
         "<del><del><del><del><del><del><del><del>",
-        "linux /casper/vmlinuz --- autoinstall ds=\"nocloud-net;seedfrom=http://{{.HTTPIP}}:{{.HTTPPort}}/\"<enter><wait>",
+        "linux /casper/vmlinuz --- autoinstall ds=\"nocloud-net;live-updates=off;seedfrom=http://{{.HTTPIP}}:{{.HTTPPort}}/\"<enter><wait>",
 #        "linux /casper/vmlinuz --- autoinstall url=/cdrom/  ds=\"nocloud-net;seedfrom=http://{{.HTTPIP}}:{{.HTTPPort}}/\"<enter><wait>",
         "initrd /casper/initrd<enter><wait>",
         "boot<enter>",
@@ -26,9 +26,9 @@ locals {
 }
 
 locals {
-    proxmox_username = vault("secrets/proxmox", "username")
-    proxmox_password = vault("secrets/proxmox", "password")
-    proxmox_url = vault("secrets/proxmox", "url")
+    proxmox_username = vault("secrets/office", "username")
+    proxmox_password = vault("secrets/office", "password")
+    proxmox_url = vault("secrets/office", "url")
     sensitive  = true
 }
 
@@ -58,7 +58,7 @@ source "proxmox" "ubuntu" {
   boot_wait    = "3s"
 
   http_directory           = "cloud-init"
-  http_interface           = "en0"
+  http_interface           = "en1"
   insecure_skip_tls_verify = true
   iso_file                 = "${var.iso_file}"
   unmount_iso              = false
@@ -75,7 +75,7 @@ source "proxmox" "ubuntu" {
   scsi_controller      = "virtio-scsi-pci"
 
   network_adapters {
-    bridge = "vmbr0"
+    bridge = "vmbr3"
     model = "virtio"
   }
 

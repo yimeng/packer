@@ -1,6 +1,6 @@
 nodes = {
-  homelab = {
-    image_name = "hello"
+  pve211 = {
+    image_name = "pve211"
     image_id = 285
   }
 #  pve212 = {
