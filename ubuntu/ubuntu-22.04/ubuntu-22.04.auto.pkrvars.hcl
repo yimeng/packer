@@ -1,6 +1,6 @@
 nodes = {
-  pve211 = {
-    image_name = "pve211"
+  homelab = {
+    image_name = "homelab"
     image_id = 285
   }
 #  pve212 = {

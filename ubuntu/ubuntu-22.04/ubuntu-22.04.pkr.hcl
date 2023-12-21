@@ -26,9 +26,9 @@ locals {
 }
 
 locals {
-    proxmox_username = vault("secrets/office", "username")
-    proxmox_password = vault("secrets/office", "password")
-    proxmox_url = vault("secrets/office", "url")
+    proxmox_username = vault("secrets/proxmox", "username")
+    proxmox_password = vault("secrets/proxmox", "password")
+    proxmox_url = vault("secrets/proxmox", "url")
     sensitive  = true
 }
 
@@ -58,7 +58,7 @@ source "proxmox" "ubuntu" {
   boot_wait    = "3s"
 
   http_directory           = "cloud-init"
-  http_interface           = "en1"
+  http_interface           = "ens18"
   insecure_skip_tls_verify = true
   iso_file                 = "${var.iso_file}"
   unmount_iso              = false
@@ -75,7 +75,7 @@ source "proxmox" "ubuntu" {
   scsi_controller      = "virtio-scsi-pci"
 
   network_adapters {
-    bridge = "vmbr3"
+    bridge = "vmbr0"
     model = "virtio"
   }
 
@@ -114,4 +114,12 @@ build {
       ]
   }
 
+}
+packer {
+  required_plugins {
+    name = {
+      version = "~> 1"
+      source  = "github.com/hashicorp/proxmox"
+    }
+  }
 }

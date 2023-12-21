@@ -10,3 +10,8 @@ debug
 export PACKER_LOG=1
 packer build --debug . 
 ```
+
+```
+packer init .
+packer build .
+```
