@@ -8,11 +8,11 @@ nodes = {
 vm_template = {
 
   init_env = {
-    boot_wait = "3s"
+    boot_wait = "10s"
     http_directory = "cloud-init"
     http_interface = "ens18"
     insecure_skip_tls_verify = true
-    iso_file                 = "local:iso/ubuntu-22.04-live-server-amd64.iso"
+    iso_file                 = "local:iso/jammy-live-server-amd64.iso"
     unmount_iso              = false
     ssh_username = "ubuntu"
     ssh_password = "ubuntu"

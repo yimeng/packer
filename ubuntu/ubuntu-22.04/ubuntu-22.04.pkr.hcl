@@ -67,6 +67,7 @@ build {
       node = source.key
       name = source.value.image_name
       #vm_id = source.value.image_id
+      vm_id = 899
     }
 }
 

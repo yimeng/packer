@@ -3,8 +3,8 @@ autoinstall:
   version: 1
   locale: en_US
   keyboard:
-    layout: en
-    variant: us
+    layout: us
+    #variant: us
   storage:
     layout:
       name: lvm
@@ -15,8 +15,28 @@ autoinstall:
     #lock_passwd: false
     #sudo: ALL=(ALL) NOPASSWD:ALL
   # updates: security
+  # updates: none
   # apt:
   #   disable_suites: [security]
+  #apt:
+  #  preserve_sources_list: true
+  #  disable_suites:
+  #    - all
+  #package_update: false
+  #package_upgrade: false
+  apt:
+    preserve_sources_list: false
+    primary:
+      - arches: [amd64]
+        uri: "http://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
+    security:
+      - arches: [amd64]
+        uri: "http://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
+  services:
+  - name: qemu-guest-agent
+    enabled: true
+    state: started
+    command: start
   ssh:
     allow-pw: true
     install-server: yes
