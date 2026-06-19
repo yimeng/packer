@@ -2,11 +2,11 @@
 
 ## 描述
 
-本 skill 描述如何在 Proxmox VE (PVE) 上使用 HashiCorp Packer 从零构建 Debian / Ubuntu 虚拟机模板。
+本 skill 描述如何在 Proxmox VE (PVE) 上使用 HashiCorp Packer 从零构建 Debian / Ubuntu / NixOS 虚拟机模板。
 
 覆盖范围：
 - 准备 PVE 环境、ISO 镜像与 API token；
-- 使用 preseed 或 cloud-init autoinstall 自动化安装；
+- 使用 preseed、cloud-init autoinstall 或 NixOS 声明式配置自动化安装；
 - 配置默认用户、SSH 公钥、基础工具、cloud-init；
 - 将 VM 转换为 PVE 模板；
 - 处理国内镜像源与 OpenClash 下的 HTTP/1.1 keep-alive 间歇性卡住问题；
@@ -14,9 +14,10 @@
 
 ## 适用场景
 
-- 需要可重复、可版本化的 Debian/Ubuntu VM 模板；
+- 需要可重复、可版本化的 Debian/Ubuntu/NixOS VM 模板；
 - 模板需要预装常用工具、SSH key、cloud-init；
 - 希望克隆出的 VM 自动根据 VM name 设置 hostname；
+- 想尝试声明式基础设施（NixOS）；
 - 在国内网络环境下构建，需要默认使用清华/国内源；
 - 需要清理仓库中硬编码的密码、SSH key 等敏感信息。
 
@@ -36,12 +37,24 @@ debian/debian-13/
 └── cloud-init/
     └── preseed.cfg.tmpl             # preseed 模板
 
+debian/debian-12/
+├── debian.pkr.hcl
+├── debian.auto.pkrvars.hcl.example
+└── cloud-init/
+    └── preseed.cfg.tmpl
+
 ubuntu/ubuntu-24.04/
 ├── ubuntu.pkr.hcl
 ├── ubuntu.auto.pkrvars.hcl.example
 └── cloud-init/
     ├── meta-data
     └── user-data.tmpl               # cloud-init 模板
+
+nixos/nixos-24.11/
+├── nixos.pkr.hcl
+├── nixos.auto.pkrvars.hcl.example
+├── configuration.nix.tpl            # NixOS 系统配置模板
+└── install-nixos.sh                 # 分区、安装、重启脚本
 ```
 
 CentOS 7 已 EOL，归档在 `legacy/centos-7/`。
@@ -93,10 +106,12 @@ packer build .
 | OS | 安装方式 | 默认 VMID | 默认用户 | 必须变量 |
 |----|---------|----------|---------|---------|
 | Debian 13 | preseed | 9000 | `yimeng` | `http_host`, `ssh_password`, `ssh_public_key` |
+| Debian 12 | preseed | 9005 | `yimeng` | `http_host`, `ssh_password`, `ssh_public_key` |
 | Debian 11 | preseed | 9003 | `packer` | `http_interface`, `ssh_password` |
 | Ubuntu 24.04 | cloud-init autoinstall | 9004 | `ubuntu` | `http_interface`, `ssh_password_hash`, `ssh_public_keys` |
 | Ubuntu 22.04 | cloud-init autoinstall | 9001 | `ubuntu` | `http_interface`, `ssh_password_hash`, `ssh_public_keys` |
 | Ubuntu 20.04 | cloud-init autoinstall | 9002 | `ubuntu` | `http_interface`, `ssh_password_hash`, `ssh_public_keys` |
+| NixOS 24.11 | live ISO + nixos-install | 9010 | `yimeng` | `bridge`, `ssh_public_key`, `iso_file` |
 
 ## 生成 Ubuntu cloud-init 密码哈希
 
@@ -105,6 +120,30 @@ mkpasswd --method=sha-512 --rounds=4096
 ```
 
 将输出写入 `ssh_password_hash`。不要提交到仓库。
+
+## NixOS 模板说明
+
+NixOS 模板使用与其他模板不同的安装流程：
+
+1. Packer 启动 NixOS minimal live ISO；
+2. `boot_command` 登录 root、设置临时密码、启动 sshd；
+3. Packer 通过 SSH 上传 `configuration.nix` 和 `install-nixos.sh`；
+4. `install-nixos.sh` 自动分区、格式化、运行 `nixos-generate-config`、复制配置、执行 `nixos-install`；
+5. 脚本重启后，Packer 使用 `configuration.nix` 中配置的 SSH key 重新连接并验证。
+
+`configuration.nix.tpl` 中已配置：
+- GRUB bootloader
+- DHCP 网络
+- OpenSSH（禁止 root/密码登录，仅 key）
+- 默认用户 + sudo
+- 清华 Nix binary cache mirror
+- 基础工具包（vim、git、curl、htop、jq）
+
+### 注意事项
+
+- NixOS 安装需要从网络下载 closure，首次构建可能较慢；
+- `iso_file` 必须指向你上传到 PVE 的 NixOS 24.11 minimal ISO；
+- 示例 ISO 文件名是占位符，请从 [nixos.org](https://nixos.org/download/) 下载最新版本并更新变量。
 
 ## Cloud-init 与 hostname
 

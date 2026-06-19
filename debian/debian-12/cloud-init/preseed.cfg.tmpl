@@ -1,0 +1,69 @@
+d-i debian-installer/locale string en_US.UTF-8
+d-i debian-installer/language string en
+d-i debian-installer/country string US
+d-i keyboard-configuration/xkb-keymap select us
+
+d-i netcfg/choose_interface select auto
+d-i netcfg/get_hostname string debian-template
+d-i netcfg/get_domain string lan
+
+d-i mirror/country string manual
+d-i mirror/http/hostname string mirrors.tuna.tsinghua.edu.cn
+d-i mirror/http/directory string /debian
+d-i mirror/http/proxy string
+
+d-i passwd/root-login boolean true
+d-i passwd/root-password password ${ssh_password}
+d-i passwd/root-password-again password ${ssh_password}
+d-i passwd/user-fullname string Yimeng
+d-i passwd/username string ${ssh_username}
+d-i passwd/user-password password ${ssh_password}
+d-i passwd/user-password-again password ${ssh_password}
+d-i user-setup/allow-password-weak boolean true
+d-i user-setup/encrypt-home boolean false
+
+d-i clock-setup/utc boolean true
+d-i time/zone string Asia/Shanghai
+d-i clock-setup/ntp boolean true
+
+d-i partman-auto/method string regular
+d-i partman-auto/choose_recipe select atomic
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/choose_partition select finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+
+d-i apt-setup/cdrom/set-first boolean false
+d-i apt-setup/non-free-firmware boolean true
+d-i apt-setup/non-free boolean true
+d-i apt-setup/contrib boolean true
+
+tasksel tasksel/first multiselect standard, ssh-server
+d-i pkgsel/include string sudo openssh-server qemu-guest-agent curl wget netcat-openbsd htop vim nano less jq unzip ca-certificates gnupg lsb-release bash-completion tree rsync git tcpdump dnsutils iproute2 iputils-ping cloud-init
+d-i pkgsel/upgrade select none
+popularity-contest popularity-contest/participate boolean false
+
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/with_other_os boolean true
+d-i grub-installer/bootdev string /dev/sda
+d-i finish-install/reboot_in_progress note
+
+d-i preseed/late_command string \
+  in-target /usr/sbin/usermod -aG sudo ${ssh_username}; \
+  in-target /bin/mkdir -p /home/${ssh_username}/.ssh /root/.ssh; \
+  in-target /bin/sh -c "echo '${ssh_public_key}' > /home/${ssh_username}/.ssh/authorized_keys"; \
+  in-target /bin/sh -c "echo '${ssh_public_key}' > /root/.ssh/authorized_keys"; \
+  in-target /bin/chown -R ${ssh_username}:${ssh_username} /home/${ssh_username}/.ssh; \
+  in-target /bin/chmod 700 /home/${ssh_username}/.ssh /root/.ssh; \
+  in-target /bin/chmod 600 /home/${ssh_username}/.ssh/authorized_keys /root/.ssh/authorized_keys; \
+  in-target /bin/sh -c "echo '${ssh_username} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/90-${ssh_username}"; \
+  in-target /bin/chmod 440 /etc/sudoers.d/90-${ssh_username}; \
+  in-target /bin/sh -c "printf '%s\n' \"alias ll='ls -alF'\" \"alias la='ls -A'\" \"alias l='ls -CF'\" \"alias grep='grep --color=auto'\" \"alias df='df -h'\" \"alias du='du -h'\" \"alias free='free -h'\" > /etc/profile.d/00-${ssh_username}-aliases.sh"; \
+  in-target /bin/sh -c "printf '%s\n' 'deb http://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free non-free-firmware' 'deb http://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free non-free-firmware' 'deb http://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-backports main contrib non-free non-free-firmware' 'deb http://mirrors.tuna.tsinghua.edu.cn/debian-security/ bookworm-security main contrib non-free non-free-firmware' > /etc/apt/sources.list"; \
+  in-target /bin/sh -c "printf '%s\n' 'Acquire::http::Pipeline-Depth \"0\";' > /etc/apt/apt.conf.d/99nopipelining"; \
+  in-target /bin/chmod 644 /etc/profile.d/00-${ssh_username}-aliases.sh; \
+  in-target /bin/sed -i 's/^#*PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config; \
+  in-target /bin/systemctl enable ssh; \
+  in-target /bin/systemctl enable qemu-guest-agent; \
+  in-target /bin/systemctl enable cloud-init || true; \
+  in-target /bin/systemctl enable cloud-final || true

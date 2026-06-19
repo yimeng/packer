@@ -1,0 +1,14 @@
+# Copy this file to nixos.auto.pkrvars.hcl and fill in real values.
+# Files matching *.auto.pkrvars.hcl are gitignored to avoid leaking secrets.
+
+proxmox_node = "homelab"
+bridge       = "vmbr1"
+iso_file     = "local:iso/nixos-minimal-24.11pre705705.11ff16831f1a-x86_64-linux.iso"
+vm_id        = 9010
+
+hostname     = "nixos-template"
+ssh_username = "yimeng"
+ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... your_key"
+
+# Temporary password used only during live ISO install.
+live_root_password = "packer"

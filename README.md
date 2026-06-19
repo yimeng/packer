@@ -67,12 +67,26 @@ Paste the output into the `ssh_password_hash` variable.
 | OS | Directory | Status | Notes |
 |----|-----------|--------|-------|
 | Debian 13 | `debian/debian-13/` | ✅ Active | Netinst preseed, Tsinghua mirror, cloud-init |
+| Debian 12 | `debian/debian-12/` | ✅ Active | Netinst preseed, Tsinghua mirror, cloud-init |
 | Debian 11 | `debian/debian-11/` | ⚠️ Legacy | DVD-based preseed build |
 | Ubuntu 24.04 | `ubuntu/ubuntu-24.04/` | ✅ Active | Cloud-init autoinstall, Tsinghua mirror |
 | Ubuntu 22.04 | `ubuntu/ubuntu-22.04/` | ✅ Active | Cloud-init autoinstall, Tsinghua mirror |
 | Ubuntu 20.04 | `ubuntu/ubuntu-20.04/` | ⚠️ Legacy | Cloud-init autoinstall, Tsinghua mirror |
+| NixOS 24.11 | `nixos/nixos-24.11/` | 🧪 Experimental | Declarative NixOS install via live ISO |
 | CentOS 7 | `legacy/centos-7/` | ❌ EOL | Archived; CentOS 7 reached EOL on 2024-06-30 |
+
+### NixOS notes
+
+NixOS uses a custom installation flow:
+
+1. Packer boots the NixOS minimal live ISO.
+2. A temporary root password is set and SSH is started.
+3. The `install-nixos.sh` script partitions the disk, runs `nixos-generate-config`, copies `configuration.nix`, and runs `nixos-install`.
+4. The VM reboots into the installed NixOS system.
+5. Packer reconnects to verify the installation.
+
+The build requires a working internet connection from the live ISO (it downloads the NixOS closure). The default ISO filename in `nixos.auto.pkrvars.hcl.example` is a placeholder; download the latest NixOS 24.11 minimal ISO and update the variable.
 
 ## Skill
 
-See `skills/pve-debian-packer-template/` for the full workflow of building a Debian 13 template on Proxmox VE with Packer, including preseed, cloud-init, SSH key injection, domestic mirror setup, and troubleshooting HTTP/1.1 keep-alive issues behind OpenClash.
+See `skills/pve-debian-packer-template/` for the full workflow of building VM templates on Proxmox VE with Packer, including Debian preseed, Ubuntu cloud-init, NixOS declarative install, SSH key injection, domestic mirror setup, and troubleshooting HTTP/1.1 keep-alive issues behind OpenClash.
