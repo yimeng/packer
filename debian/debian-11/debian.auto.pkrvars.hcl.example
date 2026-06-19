@@ -1,0 +1,11 @@
+# Copy this file to debian.auto.pkrvars.hcl and fill in real values.
+# Files matching *.auto.pkrvars.hcl are gitignored to avoid leaking secrets.
+
+proxmox_node      = "homelab"
+bridge            = "vmbr1"
+http_interface    = "YOUR_BUILD_HOST_INTERFACE"
+iso_file          = "local:iso/debian-11.6.0-amd64-DVD-1.iso"
+vm_id             = 9003
+
+ssh_username      = "packer"
+ssh_password      = "CHANGE_ME"

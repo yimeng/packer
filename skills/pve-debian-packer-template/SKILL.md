@@ -1,39 +1,50 @@
-# 使用 Packer 在 Proxmox VE 上构建 Debian 模板
+# 使用 Packer 在 Proxmox VE 上构建 VM 模板
 
 ## 描述
 
-本 skill 描述如何在 Proxmox VE (PVE) 上使用 HashiCorp Packer 从零构建一个 Debian 虚拟机模板。
+本 skill 描述如何在 Proxmox VE (PVE) 上使用 HashiCorp Packer 从零构建 Debian / Ubuntu 虚拟机模板。
 
 覆盖范围：
 - 准备 PVE 环境、ISO 镜像与 API token；
-- 使用 preseed 自动化安装 Debian；
+- 使用 preseed 或 cloud-init autoinstall 自动化安装；
 - 配置默认用户、SSH 公钥、基础工具、cloud-init；
 - 将 VM 转换为 PVE 模板；
-- 处理国内镜像源与 OpenClash 下的 HTTP/1.1 keep-alive 间歇性卡住问题。
+- 处理国内镜像源与 OpenClash 下的 HTTP/1.1 keep-alive 间歇性卡住问题；
+- 管理旧模板与 EOL 系统。
 
 ## 适用场景
 
-- 需要可重复、可版本化的 Debian VM 模板；
+- 需要可重复、可版本化的 Debian/Ubuntu VM 模板；
 - 模板需要预装常用工具、SSH key、cloud-init；
 - 希望克隆出的 VM 自动根据 VM name 设置 hostname；
-- 在国内网络环境下构建，需要默认使用清华/国内源。
+- 在国内网络环境下构建，需要默认使用清华/国内源；
+- 需要清理仓库中硬编码的密码、SSH key 等敏感信息。
 
 ## 前置条件
 
 - Proxmox VE 节点可访问，已创建 API token；
-- 已上传 Debian netinst ISO 到 PVE 存储（如 `local:iso/debian-13.5.0-amd64-netinst.iso`）；
-- 运行 Packer 的机器能访问 PVE API，且能被安装器访问（用于拉取 preseed）；
+- 已上传对应 OS 的 ISO 到 PVE 存储；
+- 运行 Packer 的机器能访问 PVE API，且能被安装器访问（用于拉取 preseed/cloud-init）；
 - 已配置 HashiCorp Vault（或准备用 `*.auto.pkrvars.hcl` 注入凭据）。
 
 ## 仓库结构
 
 ```
 debian/debian-13/
-├── debian.pkr.hcl              # Packer 主配置
-├── debian.auto.pkrvars.hcl.example  # 示例变量（凭据、网络）
+├── debian.pkr.hcl                   # Packer 主配置
+├── debian.auto.pkrvars.hcl.example  # 示例变量
 └── cloud-init/
-    └── preseed.cfg.tmpl        # preseed 模板（注入密码、SSH key）
+    └── preseed.cfg.tmpl             # preseed 模板
+
+ubuntu/ubuntu-24.04/
+├── ubuntu.pkr.hcl
+├── ubuntu.auto.pkrvars.hcl.example
+└── cloud-init/
+    ├── meta-data
+    └── user-data.tmpl               # cloud-init 模板
 ```
+
+CentOS 7 已 EOL，归档在 `legacy/centos-7/`。
 
 ## 快速开始
 
@@ -49,18 +60,22 @@ export VAULT_ADDR='http://xx.xx.xx.xx:8200'
 写入 Vault（路径 `secrets/proxmox`）：
 
 ```bash
-vault kv put secrets/proxmox url="https://pve.example.com:8006/api2/json" username="root@pam!packer" token="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+vault kv put secrets/proxmox \
+  url="https://pve.example.com:8006/api2/json" \
+  username="root@pam!packer" \
+  token="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 ```
 
 ### 2. 准备本地变量
 
 ```bash
-cd debian/debian-13
+cd debian/debian-13              # 或 ubuntu/ubuntu-24.04 等
 cp debian.auto.pkrvars.hcl.example debian.auto.pkrvars.hcl
 # 编辑 debian.auto.pkrvars.hcl：
-#   http_host      - Packer 机器 IP，安装器用来下载 preseed
-#   ssh_password   - 模板默认用户密码
-#   ssh_public_key - 要写入 authorized_keys 的公钥
+#   http_host / http_interface - Packer 机器 IP/接口，安装器用来下载配置
+#   bridge                     - Proxmox bridge
+#   ssh_password / ssh_password_hash - 默认用户密码或哈希
+#   ssh_public_key / ssh_public_keys - 要写入 authorized_keys 的公钥
 ```
 
 ### 3. 构建
@@ -71,52 +86,35 @@ packer init .
 packer build .
 ```
 
-构建完成后，PVE 上会出现 VMID 9000（`debian-13-clean-template`）并自动转换为模板。
+构建完成后，PVE 上会出现对应 VMID 的模板。
 
-## 关键配置说明
+## 各模板差异
 
-### Packer 源配置
+| OS | 安装方式 | 默认 VMID | 默认用户 | 必须变量 |
+|----|---------|----------|---------|---------|
+| Debian 13 | preseed | 9000 | `yimeng` | `http_host`, `ssh_password`, `ssh_public_key` |
+| Debian 11 | preseed | 9003 | `packer` | `http_interface`, `ssh_password` |
+| Ubuntu 24.04 | cloud-init autoinstall | 9004 | `ubuntu` | `http_interface`, `ssh_password_hash`, `ssh_public_keys` |
+| Ubuntu 22.04 | cloud-init autoinstall | 9001 | `ubuntu` | `http_interface`, `ssh_password_hash`, `ssh_public_keys` |
+| Ubuntu 20.04 | cloud-init autoinstall | 9002 | `ubuntu` | `http_interface`, `ssh_password_hash`, `ssh_public_keys` |
 
-- `source "proxmox-iso" "debian_13"` 使用本地 ISO 安装；
-- `http_content` 动态渲染 preseed，避免把密码写死到仓库；
-- `boot_command` 在启动时把 preseed URL 传给安装器；
-- `ssh_username` / `ssh_password` 用于 Packer 在安装完成后登录并标记完成。
+## 生成 Ubuntu cloud-init 密码哈希
 
-### Preseed 模板
+```bash
+mkpasswd --method=sha-512 --rounds=4096
+```
 
-`cloud-init/preseed.cfg.tmpl` 中：
+将输出写入 `ssh_password_hash`。不要提交到仓库。
 
-- 设置 locale、keyboard、时区；
-- 磁盘使用 `partman-auto/choose_recipe select atomic`；
-- 安装 `standard` + `ssh-server` + 常用工具（`sudo`, `qemu-guest-agent`, `cloud-init`, `curl`, `vim`, `jq` 等）；
-- 写入国内源 `/etc/apt/sources.list`；
-- 添加 `Acquire::http::Pipeline-Depth "0";` 配置；
-- 写入 SSH 公钥、sudo 规则、shell aliases；
-- 启用 `cloud-init`，使克隆出的 VM 能根据 VM name 自动设置 hostname。
+## Cloud-init 与 hostname
 
-### Cloud-init 与 hostname
-
-模板中已预装并启用 `cloud-init`。在 PVE 中克隆模板时：
+所有模板均启用 `cloud-init`。在 PVE 中克隆模板时：
 
 ```bash
 qm clone 9000 101 --name my-vm --full true
 ```
 
 `cloud-init` 会在首次启动时把 hostname 设为 `my-vm`。
-
-## 从模板克隆与验证
-
-```bash
-# 全量克隆
-sudo qm clone 9000 101 --name test-vm --full true
-sudo qm start 101
-
-# 获取 IP 后登录
-ssh yimeng@<ip>
-hostname          # 应为 test-vm
-cat /etc/apt/sources.list
-sudo apt update
-```
 
 ## 故障排查：国内源 HTTP/1.1 keep-alive 卡住
 
@@ -138,7 +136,7 @@ iptables -t nat -L openclash -v -n
 
 ### 处理
 
-本模板在 preseed 中已写入：
+Debian 模板在 preseed 中已写入：
 
 ```text
 Acquire::http::Pipeline-Depth "0";
@@ -173,4 +171,5 @@ sudo qm start <linked-clone-vmid>
 - 不要把 PVE API token、root 密码、SSH 私钥提交到仓库；
 - `*.auto.pkrvars.hcl` 已加入 `.gitignore`；
 - 使用 Vault 或环境变量注入凭据；
-- `preseed.cfg.tmpl` 中密码和公钥通过 Packer 变量在渲染时注入，不会出现在最终仓库中。
+- 密码和公钥通过 Packer 变量在渲染时注入，不会出现在最终仓库中；
+- EOL 系统（如 CentOS 7）归档在 `legacy/`，保留原始文件仅作历史参考，不建议继续使用。

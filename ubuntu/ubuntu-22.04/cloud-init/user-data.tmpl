@@ -1,0 +1,35 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US
+  keyboard:
+    layout: us
+  storage:
+    layout:
+      name: lvm
+  identity:
+    hostname: ubuntu
+    username: ${ssh_username}
+    password: ${ssh_password_hash}
+  ssh:
+    allow-pw: true
+    install-server: yes
+    authorized-keys:
+%{ for key in ssh_public_keys ~}
+      - ${key}
+%{ endfor ~}
+  user-data:
+    disable_root: true
+  packages:
+    - qemu-guest-agent
+  apt:
+    preserve_sources_list: false
+    primary:
+      - arches: [amd64]
+        uri: "http://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
+    security:
+      - arches: [amd64]
+        uri: "http://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
+  late-commands:
+    - echo '${ssh_username} ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/${ssh_username}
+    - env > /target/etc/cloud-init.env

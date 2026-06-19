@@ -1,0 +1,15 @@
+# Copy this file to ubuntu.auto.pkrvars.hcl and fill in real values.
+# Files matching *.auto.pkrvars.hcl are gitignored to avoid leaking secrets.
+
+proxmox_node      = "homelab"
+bridge            = "vmbr1"
+http_interface    = "YOUR_BUILD_HOST_INTERFACE"
+iso_file          = "local:iso/ubuntu-24.04-live-server-amd64.iso"
+vm_id             = 9004
+
+ssh_username      = "ubuntu"
+# Generate with: mkpasswd --method=sha-512 --rounds=4096
+ssh_password_hash = "$6$rounds=4096$CHANGE_ME"
+ssh_public_keys   = [
+  "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... your_key",
+]

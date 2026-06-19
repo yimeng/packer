@@ -8,29 +8,17 @@ packer {
 }
 
 locals {
-        boot_command = ["<esc><wait>auto preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg<enter>"]
+  boot_command = ["<esc><wait>auto preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg<enter>"]
+  date = formatdate("YYYYMMDD-hhmm", timeadd(timestamp(), "8h"))
+
+  proxmox_url      = vault("secrets/proxmox", "url")
+  proxmox_username = vault("secrets/proxmox", "username")
+  proxmox_token    = vault("secrets/proxmox", "token")
 }
 
-
-locals {
-    date = formatdate("YYYYMMDD-hhmm", timeadd(timestamp(), "8h"))
-}
-
-locals {
-    proxmox_username = vault("secrets/office", "username")
-    proxmox_password = vault("secrets/office", "password")
-    proxmox_url = vault("secrets/office", "url")
-    sensitive  = true
-}
-
-variable "ssh_username" {
+variable "proxmox_node" {
   type    = string
-  default = "packer"
-}
-# user-data identity password
-variable "ssh_password" {
-  type    = string
-  default = "packer"
+  default = "homelab"
 }
 
 variable "iso_file" {
@@ -38,71 +26,95 @@ variable "iso_file" {
   default = "local:iso/debian-11.6.0-amd64-DVD-1.iso"
 }
 
+variable "bridge" {
+  type        = string
+  description = "Proxmox bridge to attach the build VM to."
+  default     = "vmbr1"
+}
 
+variable "http_interface" {
+  type        = string
+  description = "Local interface Packer uses to serve preseed. Set to your build host's reachable interface."
+  default     = "CHANGE_ME"
+}
 
-source "proxmox" "debian" {
-  username             = "${local.proxmox_username}"
-  password             = "${local.proxmox_password}"
-  proxmox_url          = "${local.proxmox_url}"
+variable "ssh_username" {
+  type    = string
+  default = "packer"
+}
 
-  boot_command =  "${local.boot_command}"
+variable "ssh_password" {
+  type      = string
+  sensitive = true
+  description = "Password for the default user during build. Will NOT be committed; provide via *.auto.pkrvars.hcl."
+}
+
+variable "vm_id" {
+  type    = number
+  default = 9003
+}
+
+source "proxmox-iso" "debian" {
+  proxmox_url              = local.proxmox_url
+  username                 = local.proxmox_username
+  token                    = local.proxmox_token
+  insecure_skip_tls_verify = true
+  node                     = var.proxmox_node
+
+  vm_id                 = var.vm_id
+  vm_name               = "debian-11-template"
+  template_name         = "debian-11-template"
+  template_description  = "Debian 11 x86_64 template built with Packer on ${local.date}"
+  tags                  = "debian;template;packer"
+  qemu_agent            = true
+  os                    = "l26"
+
+  boot_command = local.boot_command
   boot_wait    = "3s"
 
   http_directory           = "cloud-init"
-  http_interface           = "en1"
+  http_interface           = var.http_interface
   insecure_skip_tls_verify = true
-  iso_file                 = "${var.iso_file}"
+  iso_file                 = var.iso_file
   unmount_iso              = false
 
-  os                       = "l26"
-  cores                    = "4"
-  memory                   = "8192"
+  cores    = 4
+  sockets  = 1
+  memory   = 8192
+  cpu_type = "host"
+  bios     = "seabios"
+  machine  = "q35"
+
+  scsi_controller = "virtio-scsi-single"
   disks {
-    disk_size         = "60G"
-    storage_pool      = "local-lvm"
-    storage_pool_type = "lvm"
-    type              = "scsi"
+    type         = "scsi"
+    disk_size    = "60G"
+    storage_pool = "local-lvm"
+    format       = "raw"
+    cache_mode   = "none"
+    io_thread    = true
+    discard      = true
   }
-  scsi_controller      = "virtio-scsi-pci"
 
   network_adapters {
-    bridge = "vmbr3"
-    model = "virtio"
+    model    = "virtio"
+    bridge   = var.bridge
+    firewall = false
   }
 
-  qemu_agent           = true
-  template_name        = "debian-template-yimeng"
-  template_description = "debian 11 x86_64 template built with packer on ${local.date}"
-
-  ssh_username         = "${var.ssh_username}"
-  ssh_password         = "${var.ssh_password}"
-  ssh_timeout          = "30m"
-
-
-}
-
-variable nodes {
+  ssh_username = var.ssh_username
+  ssh_password = var.ssh_password
+  ssh_timeout  = "30m"
 }
 
 build {
   name = "build"
-  dynamic "source" {
-    for_each = var.nodes
-    labels = ["source.proxmox.debian"]
-    content {
-      node = source.key
-      name = source.value.image_name
-      vm_id = source.value.image_id
-    }
-}
+  sources = ["source.proxmox-iso.debian"]
 
   provisioner "shell" {
     inline = [
-      #"sudo truncate -s 0 /etc/machine-id",
-      #"hostname=$(openssl rand -hex 8) && sudo hostnamectl set-hostname $hostname && echo \"127.0.1.1 $hostname\" >> /etc/hosts",
       "sudo env > ~/packer.env",
       "exit 0",
-      ]
+    ]
   }
-
 }
