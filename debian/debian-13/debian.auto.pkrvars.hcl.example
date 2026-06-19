@@ -1,4 +1,4 @@
-# Copy this file to debian-13.auto.pkrvars.hcl and fill in real values.
+# Copy this file to debian.auto.pkrvars.hcl and fill in real values.
 # Files matching *.auto.pkrvars.hcl are gitignored to avoid leaking secrets.
 
 proxmox_node      = "homelab"

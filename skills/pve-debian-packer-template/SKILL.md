@@ -29,10 +29,10 @@
 
 ```
 debian/debian-13/
-├── debian-13.pkr.hcl              # Packer 主配置
-├── debian-13.auto.pkrvars.hcl.example  # 示例变量（凭据、网络）
-└── http/
-    └── preseed.cfg.tmpl           # preseed 模板（注入密码、SSH key）
+├── debian.pkr.hcl              # Packer 主配置
+├── debian.auto.pkrvars.hcl.example  # 示例变量（凭据、网络）
+└── cloud-init/
+    └── preseed.cfg.tmpl        # preseed 模板（注入密码、SSH key）
 ```
 
 ## 快速开始
@@ -56,8 +56,8 @@ vault kv put secrets/proxmox url="https://pve.example.com:8006/api2/json" userna
 
 ```bash
 cd debian/debian-13
-cp debian-13.auto.pkrvars.hcl.example debian-13.auto.pkrvars.hcl
-# 编辑 debian-13.auto.pkrvars.hcl：
+cp debian.auto.pkrvars.hcl.example debian.auto.pkrvars.hcl
+# 编辑 debian.auto.pkrvars.hcl：
 #   http_host      - Packer 机器 IP，安装器用来下载 preseed
 #   ssh_password   - 模板默认用户密码
 #   ssh_public_key - 要写入 authorized_keys 的公钥
@@ -84,7 +84,7 @@ packer build .
 
 ### Preseed 模板
 
-`http/preseed.cfg.tmpl` 中：
+`cloud-init/preseed.cfg.tmpl` 中：
 
 - 设置 locale、keyboard、时区；
 - 磁盘使用 `partman-auto/choose_recipe select atomic`；

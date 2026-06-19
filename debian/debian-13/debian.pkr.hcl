@@ -53,7 +53,7 @@ variable "iso_file" {
 }
 
 locals {
-  preseed = templatefile("${path.root}/http/preseed.cfg.tmpl", {
+  preseed = templatefile("${path.root}/cloud-init/preseed.cfg.tmpl", {
     ssh_username   = var.ssh_username
     ssh_password   = var.ssh_password
     ssh_public_key = var.ssh_public_key

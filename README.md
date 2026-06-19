@@ -16,8 +16,8 @@ Load it and build:
 ```bash
 source env.sh
 cd debian/debian-13
-cp debian-13.auto.pkrvars.hcl.example debian-13.auto.pkrvars.hcl
-# edit debian-13.auto.pkrvars.hcl with your network and credentials
+cp debian.auto.pkrvars.hcl.example debian.auto.pkrvars.hcl
+# edit debian.auto.pkrvars.hcl with your network and credentials
 packer init .
 packer build .
 ```
