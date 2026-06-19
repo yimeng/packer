@@ -49,5 +49,5 @@ The Debian 13 template reads Proxmox credentials from Vault path `secrets/proxmo
 
 ## Skill
 
-See `.kimi-code/skills/pve-debian-template-mirror/` for diagnosing HTTP/1.1 keep-alive issues with domestic mirrors behind OpenClash and for updating an existing PVE template disk offline.
+See `.kimi-code/skills/pve-debian-packer-template/` for the full workflow of building a Debian 13 template on Proxmox VE with Packer, including preseed, cloud-init, SSH key injection, domestic mirror setup, and troubleshooting HTTP/1.1 keep-alive issues behind OpenClash.
 
